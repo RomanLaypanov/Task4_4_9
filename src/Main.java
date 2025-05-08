@@ -1,10 +1,14 @@
 import java.util.logging.Logger;
 
 public class Main {
+    public static final String AUSTIN_POWERS = "Austin Powers";
+    public static final String WEAPONS = "weapons";
+    public static final String BANNED_SUBSTANCE = "banned substance";
+
     public static void main(String[] args) {
         Logger logger = Logger.getLogger("SpyLogger");
         MailService spy = new Spy(logger);
-        Thief thief = new Thief(10);
+        Thief thief = new Thief(1000);
         MailService inspector = new Inspector();
 
         MailService[] services = {spy, thief, inspector};
@@ -32,7 +36,6 @@ public class Main {
     }
 
     public static abstract class AbstractSendable implements Sendable {
-
         protected final String from;
         protected final String to;
 
@@ -66,7 +69,6 @@ public class Main {
     }
 
     public static class MailMessage extends AbstractSendable {
-
         private final String message;
 
         public MailMessage(String from, String to, String message) {
@@ -192,17 +194,16 @@ public class Main {
 
         @Override
         public Sendable processMail(Sendable mail) {
-            if (!(mail instanceof MailMessage)) {
-                return mail;
-            }
+            if (mail instanceof MailMessage) {
 
-            MailMessage message = (MailMessage) mail;
-            Logger LOG = Logger.getLogger(Main.class.getName());
-            if (message.getFrom().equals("Austin Powers") || message.getTo().equals("Austin Powers")) {
-                LOG.warning("Detected target mail correspondence: from " + message.getFrom() +
-                        " to " + message.getTo() + ": \"" + message.getMessage() + "\"");
-            } else {
-                LOG.info("Usual correspondence: from " + message.getFrom() + " to " + message.getTo());
+                MailMessage message = (MailMessage) mail;
+
+                if (message.getFrom().equals(AUSTIN_POWERS) || message.getTo().equals(AUSTIN_POWERS)) {
+                    logger.warning("Detected target mail correspondence: from " + message.getFrom() +
+                            " to " + message.getTo() + ": \"" + message.getMessage() + "\"");
+                } else {
+                    logger.info("Usual correspondence: from " + message.getFrom() + " to " + message.getTo());
+                }
             }
 
             return mail;
@@ -219,19 +220,18 @@ public class Main {
 
         @Override
         public Sendable processMail(Sendable mail) {
-            if (!(mail instanceof MailPackage)) {
-                return mail;
-            }
+            if (mail instanceof MailPackage) {
 
-            MailPackage originalPackage = (MailPackage) mail;
-            if (originalPackage.getContent().getPrice() >= minPrice) {
-                // Изменяем содержание посылки на камни
-                Package fakeContent = new Package("stones instead of " + originalPackage.getContent().getContent(), 0);
-                MailPackage fakePackage = new MailPackage(originalPackage.getFrom(), originalPackage.getTo(), fakeContent);
+                MailPackage originalPackage = (MailPackage) mail;
+                if (originalPackage.getContent().getPrice() >= minPrice) {
 
-                // Запоминаем стоимость украденного
-                stolenValue += originalPackage.getContent().getPrice();
-                return fakePackage;
+                    Package fakeContent = new Package("stones instead of " + originalPackage.getContent().getContent(), 0);
+                    MailPackage fakePackage = new MailPackage(originalPackage.getFrom(), originalPackage.getTo(), fakeContent);
+
+
+                    stolenValue += originalPackage.getContent().getPrice();
+                    return fakePackage;
+                }
             }
 
             return mail;
@@ -246,21 +246,16 @@ public class Main {
     public static class Inspector implements MailService {
         @Override
         public Sendable processMail(Sendable mail) {
-            if (!(mail instanceof MailPackage)) {
-                return mail;
-            }
+            if (mail instanceof MailPackage) {
 
-            try {
                 MailPackage mailPackage = (MailPackage) mail;
 
-                if (mailPackage.getContent().getContent().equals("weapons") ||
-                        mailPackage.getContent().getContent().equals("banned substance")) {
+                if (mailPackage.getContent().getContent().equals(WEAPONS) ||
+                        mailPackage.getContent().getContent().equals(BANNED_SUBSTANCE)) {
                     throw new llegalPackageException("Запрещенный предмет");
                 } else if (mailPackage.getContent().getContent().contains("stones")) {
                     throw new StolenPackageException("Посылку украли");
                 }
-            } catch (llegalPackageException | StolenPackageException e) {
-                System.err.println("Ошибка при обработке отправления: " + e.getMessage());
             }
 
             return mail;
